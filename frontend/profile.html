@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Profile - School Management</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Profile</h1>
+    <div id="profile" class="card">Loading profile...</div>
+    <div class="controls">
+      <button id="logout">Logout</button>
+    </div>
+  </main>
+
+  <script>
+  (function(){
+    const token = localStorage.getItem('sms_token');
+    const profileEl = document.getElementById('profile');
+    const logoutBtn = document.getElementById('logout');
+
+    if (!token) {
+      profileEl.innerHTML = '<p>No token found. <a href="index.html">Login</a></p>';
+      return;
+    }
+
+    async function loadProfile(){
+      try {
+        const res = await fetch('http://localhost:8080/api/profile', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) {
+          const b = await res.json().catch(()=>({}));
+          profileEl.innerHTML = '<p>Failed to load profile: '+(b.error||res.status)+'</p>';
+          return;
+        }
+        const body = await res.json();
+        // body may be user or {data:user}
+        const user = body.data || body;
+        profileEl.innerHTML = '<pre>'+JSON.stringify(user, null, 2)+'</pre>';
+      } catch(err){
+        profileEl.innerHTML = '<p>Network error. Check console.</p>';
+        console.error(err);
+      }
+    }
+
+    logoutBtn.addEventListener('click', ()=>{
+      localStorage.removeItem('sms_token');
+      localStorage.removeItem('sms_user');
+      window.location.href = 'index.html';
+    });
+
+    loadProfile();
+  })();
+  </script>
+</body>
+</html>

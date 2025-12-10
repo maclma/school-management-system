@@ -1,0 +1,31 @@
+#!/usr/bin/env pwsh
+try {
+    Write-Host "Running pre-commit checks..."
+
+    # Run gofmt (check only)
+    $fmt = & gofmt -l .
+    if ($fmt) {
+        Write-Host "gofmt found files needing formatting:`n$fmt" -ForegroundColor Red
+        exit 1
+    }
+
+    # Run go vet
+    Write-Host "Running go vet..."
+    & go vet ./...
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    # Run golangci-lint if available
+    if (Get-Command golangci-lint -ErrorAction SilentlyContinue) {
+        Write-Host "Running golangci-lint..."
+        & golangci-lint run
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    } else {
+        Write-Host "golangci-lint not installed; skipping lint run." -ForegroundColor Yellow
+    }
+
+    Write-Host "Pre-commit checks passed." -ForegroundColor Green
+    exit 0
+} catch {
+    Write-Host "Pre-commit hook failed: $_" -ForegroundColor Red
+    exit 1
+}

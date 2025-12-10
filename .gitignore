@@ -1,0 +1,49 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, coverage
+*.test
+coverage.out
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Go build output
+/bin/
+/build/
+
+# Dependency directories
+vendor/
+
+# Environment files
+.env
+.env.*
+
+# SQLite DB and local database files
+*.db
+school.db
+
+# Logs
+/logs/
+*.log
+
+# IDE/project files
+.envrc
+.vagrant/
+
+# Temporary files
+/tmp/
+
+# Go module cache (optional)
+# GOMODCACHE

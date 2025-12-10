@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard - School Management</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Dashboard</h1>
+    <div class="card" id="user">Loading user...</div>
+
+    <div class="grid">
+      <div class="panel" id="main-panel">
+        <section id="courses">
+          <h2>Courses</h2>
+          <div id="courses-list">Loading courses...</div>
+        </section>
+
+        <section id="enrollments" style="margin-top:1rem">
+          <h2>Your Enrollments</h2>
+          <div id="enrollments-list">Loading enrollments...</div>
+        </section>
+      </div>
+
+      <aside class="panel" id="side-panel">
+        <section id="grades">
+          <h2>Grades Summary</h2>
+          <div id="grades-list">Loading grades...</div>
+        </section>
+
+        <section id="attendance" style="margin-top:1rem">
+          <h2>Attendance</h2>
+          <div id="attendance-list">Loading attendance...</div>
+        </section>
+      </aside>
+    </div>
+
+    <div class="controls">
+      <button id="logout">Logout</button>
+    </div>
+  </main>
+
+  <script src="api.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Register - School Management</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Create account</h1>
+    <form id="register-form" class="card">
+      <label for="first_name">First name</label>
+      <input id="first_name" name="first_name" required />
+
+      <label for="last_name">Last name</label>
+      <input id="last_name" name="last_name" required />
+
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" required />
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required />
+
+      <label for="role">Role</label>
+      <select id="role" name="role">
+        <option value="student" selected>Student</option>
+        <option value="teacher">Teacher</option>
+      </select>
+
+      <button type="submit">Register</button>
+      <p id="message" class="muted"></p>
+    </form>
+
+    <p class="hint">Already have an account? <a href="index.html">Login</a></p>
+  </main>
+  <script src="api.js"></script>
+  <script src="register.js"></script>
+</body>
+</html>
