@@ -27,7 +27,9 @@ func ConnectDB(cfg *config.Config) (*gorm.DB, error) {
 
 	// Retry connection (useful when starting app before database)
 	maxRetries := 5
+	start := time.Now()
 	for i := 0; i < maxRetries; i++ {
+		log.Printf("DB connect attempt %d/%d", i+1, maxRetries)
 		if cfg.DBDriver == "sqlite" || cfg.DBDriver == "sqlite3" {
 			db, err = gorm.Open(glebarez.Open(cfg.DBPath), &gorm.Config{
 				Logger: gormLogger,
@@ -43,6 +45,8 @@ func ConnectDB(cfg *config.Config) (*gorm.DB, error) {
 		}
 
 		if err == nil {
+			elapsed := time.Since(start)
+			log.Printf("DB connected after %s (attempt %d)", elapsed.String(), i+1)
 			break
 		}
 
@@ -66,6 +70,16 @@ func ConnectDB(cfg *config.Config) (*gorm.DB, error) {
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetConnMaxLifetime(time.Hour)
+
+	// Create indexes for performance optimization
+	if err := CreateIndexes(db); err != nil {
+		log.Printf("Warning: Failed to create indexes: %v", err)
+	} else {
+		log.Println("Database indexes created successfully")
+	}
+
+	// Optimize query settings
+	OptimizeQueries(db)
 
 	DB = db
 	log.Println("Database connected successfully")

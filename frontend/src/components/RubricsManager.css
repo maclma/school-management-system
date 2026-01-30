@@ -1,0 +1,636 @@
+.rubrics-manager-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.rubrics-manager-container h2 {
+  color: #333;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #ddd;
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 10px 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.tab:hover {
+  color: #333;
+}
+
+.tab.active {
+  color: #4CAF50;
+  border-bottom-color: #4CAF50;
+}
+
+.tab-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tab-content h3 {
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+.error-message {
+  background: #fee;
+  border: 1px solid #f99;
+  color: #c33;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.success-message {
+  background: #efe;
+  border: 1px solid #9f9;
+  color: #3c3;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+}
+
+/* Form Styles */
+.rubric-form,
+.score-form {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.2);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-group input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+}
+
+.criteria-section {
+  background: white;
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.criteria-section h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 15px;
+}
+
+.criterion-form {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 4px;
+  align-items: flex-start;
+}
+
+.criterion-form input,
+.criterion-form textarea {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.criterion-form textarea {
+  min-height: 60px;
+  resize: vertical;
+  grid-column: 1 / 4;
+}
+
+.criterion-form .remove-btn {
+  padding: 6px 12px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.criterion-form .remove-btn:hover {
+  background: #da190b;
+}
+
+.add-btn,
+.view-btn,
+.delete-btn,
+.rubric-form button,
+.score-form button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.add-btn {
+  background: #2196F3;
+  color: white;
+  width: 100%;
+}
+
+.add-btn:hover {
+  background: #0b7dda;
+}
+
+.rubric-form button,
+.score-form button {
+  width: 100%;
+  background: #4CAF50;
+  color: white;
+  font-size: 15px;
+  padding: 12px;
+}
+
+.rubric-form button:hover:not(:disabled),
+.score-form button:hover:not(:disabled) {
+  background: #45a049;
+}
+
+.rubric-form button:disabled,
+.score-form button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Input Groups */
+.input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.input-group input,
+.input-group select {
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.input-group button {
+  padding: 10px 20px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s ease;
+}
+
+.input-group button:hover:not(:disabled) {
+  background: #45a049;
+}
+
+.input-group button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Rubrics List */
+.rubrics-list {
+  margin-top: 20px;
+}
+
+.rubrics-list h3 {
+  color: #333;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.rubric-card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.rubric-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.rubric-card h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.status.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status.inactive {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.rubric-card .criteria {
+  background: #f9f9f9;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+.rubric-card .criteria h5 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 13px;
+}
+
+.rubric-card .criteria ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.rubric-card .criteria li {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #666;
+}
+
+.rubric-card .criteria strong {
+  color: #333;
+}
+
+.rubric-card .criteria p {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: #999;
+  font-style: italic;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.view-btn {
+  background: #2196F3;
+  color: white;
+  flex: 1;
+}
+
+.view-btn:hover {
+  background: #0b7dda;
+}
+
+.delete-btn {
+  background: #f44336;
+  color: white;
+  flex: 1;
+}
+
+.delete-btn:hover {
+  background: #da190b;
+}
+
+/* Rubric Details */
+.rubric-details {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 15px;
+  margin-top: 20px;
+}
+
+.rubric-details h3 {
+  margin-top: 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.rubric-details p {
+  color: #666;
+  font-size: 14px;
+  margin: 8px 0;
+}
+
+.rubric-details .criteria {
+  background: #f9f9f9;
+  padding: 12px;
+  border-radius: 4px;
+  margin-top: 15px;
+}
+
+.rubric-details .criteria h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 14px;
+}
+
+.rubric-details .criteria ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.rubric-details .criteria li {
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: #666;
+}
+
+.rubric-details .criteria strong {
+  color: #333;
+  font-size: 14px;
+}
+
+.rubric-details .criteria .desc {
+  margin: 4px 0 0 20px;
+  font-size: 12px;
+  color: #999;
+  font-style: italic;
+}
+
+/* Score Details */
+.score-details {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 15px;
+  margin-top: 20px;
+}
+
+.score-details h3 {
+  margin-top: 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.score-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.score-stat {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 15px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.score-stat.good {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+}
+
+.score-stat .label {
+  display: block;
+  font-size: 12px;
+  opacity: 0.9;
+  margin-bottom: 5px;
+}
+
+.score-stat .value {
+  display: block;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.score-stat .value.grade {
+  font-size: 24px;
+}
+
+.criterion-breakdown {
+  margin: 20px 0;
+}
+
+.criterion-breakdown h4 {
+  color: #333;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.criterion-breakdown table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.criterion-breakdown table thead {
+  background: #f0f0f0;
+  border-bottom: 1px solid #ddd;
+}
+
+.criterion-breakdown table th {
+  padding: 10px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+}
+
+.criterion-breakdown table td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  color: #666;
+}
+
+.criterion-breakdown table tr:hover {
+  background: #f9f9f9;
+}
+
+.feedback {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 12px;
+  border-radius: 4px;
+  margin: 15px 0;
+}
+
+.feedback h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 14px;
+}
+
+.feedback p {
+  margin: 0;
+  color: #666;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.graded-at {
+  font-size: 12px;
+  color: #999;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #ddd;
+}
+
+.help-text {
+  background: #e3f2fd;
+  border: 1px solid #90caf9;
+  color: #1565c0;
+  padding: 12px;
+  border-radius: 4px;
+  margin-top: 20px;
+  font-size: 13px;
+}
+
+.help-text h4 {
+  margin: 0 0 10px 0;
+  color: #1565c0;
+  font-size: 14px;
+}
+
+.help-text pre {
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 0;
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .rubrics-manager-container {
+    padding: 10px;
+  }
+
+  .tabs {
+    flex-direction: column;
+    border-bottom: none;
+  }
+
+  .tab {
+    border: 1px solid #ddd;
+    border-bottom: 3px solid transparent;
+  }
+
+  .tab.active {
+    border: 1px solid #4CAF50;
+    border-bottom: 3px solid #4CAF50;
+  }
+
+  .criterion-form {
+    grid-template-columns: 1fr;
+  }
+
+  .criterion-form textarea {
+    grid-column: 1;
+  }
+
+  .criterion-form .remove-btn {
+    width: 100%;
+  }
+
+  .input-group {
+    flex-direction: column;
+  }
+
+  .input-group input,
+  .input-group select {
+    width: 100%;
+  }
+
+  .score-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .view-btn,
+  .delete-btn {
+    flex: none;
+    width: 100%;
+  }
+}

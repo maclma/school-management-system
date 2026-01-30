@@ -63,7 +63,7 @@ export default function AdminDashboard() {
               <div className="table-container">
                 <table className="simple-table">
                   <thead><tr><th>ID</th><th>Email</th><th>Name</th><th>Role</th><th>Status</th><th>Action</th></tr></thead>
-                  <tbody>{filteredUsers.map(u => (<tr key={u.id}><td>{u.id}</td><td>{u.email}</td><td>{u.first_name} {u.last_name}</td><td><span className="badge">{u.role}</span></td><td>{u.is_active ? '✓' : '⊘'}</td><td><button className="small danger" onClick={() => deleteUser(u.id)}>Delete</button></td></tr>))}</tbody>
+                  <tbody>{filteredUsers.map(u => (<tr key={u.id}><td>{u.id}</td><td>{u.email}</td><td>{u.first_name} {u.last_name}</td><td><span className="badge">{u.role}</span></td><td><select value={u.is_active ? 'active' : 'inactive'} onChange={async (e) => { try { await api.updateUserStatus(u.id, e.target.value === 'active'); showToast('Status updated', 'success'); await loadUsers() } catch (e) { showToast('Failed to update', 'error') } }}><option value="active">Active</option><option value="inactive">Inactive</option></select></td><td><button className="small danger" onClick={() => deleteUser(u.id)}>Delete</button></td></tr>))}</tbody>
                 </table>
               </div>
             )}

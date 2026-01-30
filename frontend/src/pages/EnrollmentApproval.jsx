@@ -11,7 +11,7 @@ export default function EnrollmentApproval() {
 
   async function loadEnrollments() {
     try {
-      const res = await api.request('/admin/enrollments', { method: 'GET' })
+      const res = await api.getAdminEnrollments()
       setEnrollments(res.data || res || [])
     } catch (e) {
       showToast('Failed to load enrollments', 'error')
@@ -20,7 +20,7 @@ export default function EnrollmentApproval() {
 
   async function approveEnrollment(enrollmentId) {
     try {
-      await api.request(`/admin/enrollments/${enrollmentId}/approve`, { method: 'POST' })
+      await api.approveEnrollment(enrollmentId)
       showToast('Enrollment approved', 'success')
       await loadEnrollments()
     } catch (e) {
@@ -31,7 +31,7 @@ export default function EnrollmentApproval() {
   async function rejectEnrollment(enrollmentId) {
     if (!confirm('Reject this enrollment? This cannot be undone.')) return
     try {
-      await api.request(`/admin/enrollments/${enrollmentId}/reject`, { method: 'POST' })
+      await api.rejectEnrollment(enrollmentId)
       showToast('Enrollment rejected', 'success')
       await loadEnrollments()
     } catch (e) {

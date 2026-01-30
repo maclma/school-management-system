@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"net/http"
 	"school-management-system/internal/models"
 	"school-management-system/internal/service"
+	appErrors "school-management-system/pkg/errors"
+	"school-management-system/pkg/response"
 	"strconv"
 	"time"
 
@@ -20,17 +21,23 @@ func NewStudentHandler(studentService service.StudentService) *StudentHandler {
 
 type CreateStudentRequest struct {
 	UserID      uint   `json:"user_id" binding:"required"`
-	StudentID   string `json:"student_id" binding:"required"`
-	GradeLevel  string `json:"grade_level"`
+	StudentID   string `json:"student_id" binding:"required,min=3"`
+	GradeLevel  string `json:"grade_level" binding:"required"`
 	ParentName  string `json:"parent_name"`
-	ParentPhone string `json:"parent_phone"`
-	ParentEmail string `json:"parent_email"`
+	ParentPhone string `json:"parent_phone" binding:"omitempty,min=10"`
+	ParentEmail string `json:"parent_email" binding:"omitempty,email"`
 }
 
 func (h *StudentHandler) CreateStudent(c *gin.Context) {
 	var req CreateStudentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.Error(c, appErrors.BadRequest("invalid request body: "+err.Error()))
+		return
+	}
+
+	// Validate student ID is not empty
+	if req.StudentID == "" {
+		response.Error(c, appErrors.MissingRequiredField("student_id"))
 		return
 	}
 
@@ -46,30 +53,27 @@ func (h *StudentHandler) CreateStudent(c *gin.Context) {
 
 	err := h.studentService.CreateStudent(student)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.Error(c, appErrors.ServiceError("StudentService", "CreateStudent", err))
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Student created successfully",
-		"student": student,
-	})
+	response.Created(c, "Student created successfully", student)
 }
 
 func (h *StudentHandler) GetStudent(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid student ID"})
+		response.Error(c, appErrors.InvalidFieldFormat("id", "unsigned integer"))
 		return
 	}
 
 	student, err := h.studentService.GetStudentByID(uint(id))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		response.Error(c, appErrors.NotFound("Student not found"))
 		return
 	}
 
-	c.JSON(http.StatusOK, student)
+	response.Success(c, "Student retrieved successfully", student)
 }
 
 func (h *StudentHandler) GetAllStudents(c *gin.Context) {
@@ -90,28 +94,23 @@ func (h *StudentHandler) GetAllStudents(c *gin.Context) {
 
 	students, total, err := h.studentService.GetAllStudents(page, limit)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch students"})
+		response.Error(c, appErrors.ServiceError("StudentService", "GetAllStudents", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data":  students,
-		"total": total,
-		"page":  page,
-		"limit": limit,
-	})
+	response.Paginated(c, "Students retrieved successfully", students, page, limit, total)
 }
 
 func (h *StudentHandler) UpdateStudent(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid student ID"})
+		response.Error(c, appErrors.InvalidFieldFormat("id", "unsigned integer"))
 		return
 	}
 
 	var req CreateStudentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.Error(c, appErrors.BadRequest("invalid request body: "+err.Error()))
 		return
 	}
 
@@ -127,27 +126,25 @@ func (h *StudentHandler) UpdateStudent(c *gin.Context) {
 
 	err = h.studentService.UpdateStudent(student)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.Error(c, appErrors.ServiceError("StudentService", "UpdateStudent", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Student updated successfully"})
+	response.Success(c, "Student updated successfully", nil)
 }
 
 func (h *StudentHandler) DeleteStudent(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid student ID"})
+		response.Error(c, appErrors.InvalidFieldFormat("id", "unsigned integer"))
 		return
 	}
 
 	err = h.studentService.DeleteStudent(uint(id))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.Error(c, appErrors.ServiceError("StudentService", "DeleteStudent", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Student deleted successfully"})
+	response.NoContent(c)
 }
-
-// Student handler placeholder. Implement HTTP handlers for students here as needed.

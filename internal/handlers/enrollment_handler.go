@@ -12,10 +12,14 @@ import (
 
 type EnrollmentHandler struct {
 	enrollmentService service.EnrollmentService
+	studentService    service.StudentService
 }
 
-func NewEnrollmentHandler(enrollmentService service.EnrollmentService) *EnrollmentHandler {
-	return &EnrollmentHandler{enrollmentService: enrollmentService}
+func NewEnrollmentHandler(enrollmentService service.EnrollmentService, studentService service.StudentService) *EnrollmentHandler {
+	return &EnrollmentHandler{
+		enrollmentService: enrollmentService,
+		studentService:    studentService,
+	}
 }
 
 type EnrollStudentRequest struct {
@@ -241,4 +245,51 @@ func (h *EnrollmentHandler) RejectEnrollment(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Enrollment rejected"})
+}
+
+func (h *EnrollmentHandler) GetMyEnrollments(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	userIDUint, ok := userID.(uint)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	// Get student ID from user ID
+	student, err := h.studentService.GetStudentByUserID(userIDUint)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Student record not found"})
+		return
+	}
+
+	page := 1
+	limit := 50
+
+	if p := c.Query("page"); p != "" {
+		if val, err := strconv.Atoi(p); err == nil && val > 0 {
+			page = val
+		}
+	}
+
+	if l := c.Query("limit"); l != "" {
+		if val, err := strconv.Atoi(l); err == nil && val > 0 {
+			limit = val
+		}
+	}
+
+	enrollments, total, err := h.enrollmentService.GetStudentEnrollments(student.ID, page, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch enrollments"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":  enrollments,
+		"total": total,
+	})
 }

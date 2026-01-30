@@ -21,7 +21,8 @@ export default function Login(){
         localStorage.setItem('sms_role', user.role)
       }
       showToast('Logged in', 'success')
-      setTimeout(()=> window.navigate('/dashboard'), 400)
+      const targetPath = user.role === 'admin' ? '/admin' : user.role === 'teacher' ? '/teacher' : '/dashboard'
+      setTimeout(()=> window.navigate(targetPath), 400)
     }catch(err){
       console.error(err)
       showToast(err.message || 'Login failed', 'error')

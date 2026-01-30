@@ -12,10 +12,14 @@ import (
 
 type AttendanceHandler struct {
 	attendanceService service.AttendanceService
+	studentService    service.StudentService
 }
 
-func NewAttendanceHandler(attendanceService service.AttendanceService) *AttendanceHandler {
-	return &AttendanceHandler{attendanceService: attendanceService}
+func NewAttendanceHandler(attendanceService service.AttendanceService, studentService service.StudentService) *AttendanceHandler {
+	return &AttendanceHandler{
+		attendanceService: attendanceService,
+		studentService:    studentService,
+	}
 }
 
 type RecordAttendanceRequest struct {
@@ -238,5 +242,52 @@ func (h *AttendanceHandler) GetAttendanceStats(c *gin.Context) {
 		"late":       late,
 		"total":      present + absent + late,
 		"percentage": percentage,
+	})
+}
+
+func (h *AttendanceHandler) GetMyAttendance(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	userIDUint, ok := userID.(uint)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	// Get student ID from user ID
+	student, err := h.studentService.GetStudentByUserID(userIDUint)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Student record not found"})
+		return
+	}
+
+	page := 1
+	limit := 50
+
+	if p := c.Query("page"); p != "" {
+		if val, err := strconv.Atoi(p); err == nil && val > 0 {
+			page = val
+		}
+	}
+
+	if l := c.Query("limit"); l != "" {
+		if val, err := strconv.Atoi(l); err == nil && val > 0 {
+			limit = val
+		}
+	}
+
+	attendance, total, err := h.attendanceService.GetStudentAttendance(student.ID, page, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch attendance"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":  attendance,
+		"total": total,
 	})
 }

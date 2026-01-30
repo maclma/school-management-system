@@ -64,7 +64,7 @@ func (r *teacherRepository) GetAll(page, limit int) ([]models.Teacher, int64, er
 
 func (r *teacherRepository) Update(teacher *models.Teacher) error {
 	db := database.GetDB()
-	return db.Model(&models.Teacher{}).Where("id = ?", teacher.ID).Updates(teacher).Error
+	return db.Save(teacher).Error
 }
 
 func (r *teacherRepository) Delete(id uint) error {
