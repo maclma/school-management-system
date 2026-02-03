@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payments</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; }
+        .header button { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        .section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .section h2 { color: #2c3e50; border-bottom: 2px solid #fee140; padding-bottom: 10px; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { display: inline-block; padding: 10px 15px; background: white; border-radius: 4px; margin-right: 10px; text-decoration: none; color: #fa709a; border: 1px solid #ddd; }
+        .nav a:hover { background: #fa709a; color: white; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 25px; border-radius: 8px; }
+        .stat-card h3 { font-size: 14px; opacity: 0.9; margin-bottom: 10px; }
+        .stat-card .value { font-size: 32px; font-weight: bold; }
+        .stat-card .detail { font-size: 12px; margin-top: 10px; opacity: 0.8; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f9f9f9; padding: 12px; text-align: left; font-weight: 600; color: #2c3e50; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        tr:hover { background: #f9f9f9; }
+        button { background: #fa709a; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #f85980; }
+        .status { padding: 4px 8px; border-radius: 3px; font-size: 12px; font-weight: 600; }
+        .status.paid { background: #27ae60; color: white; }
+        .status.pending { background: #f39c12; color: white; }
+        .status.overdue { background: #e74c3c; color: white; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 500; margin-bottom: 5px; }
+        .payment-method { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
+        .payment-method:hover { background: #f9f9f9; }
+        .payment-method input[type="radio"] { margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💳 Payments & Fees</h1>
+            <button onclick="logout()">Logout</button>
+        </div>
+
+        <div class="nav">
+            <a href="admin-dashboard.html">Dashboard</a>
+            <a href="grades.html">Grades</a>
+            <a href="payments.html">Payments</a>
+        </div>
+
+        <div class="section">
+            <h2>💰 Account Summary</h2>
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <h3>Total Due</h3>
+                    <div class="value" id="total-due">$0.00</div>
+                    <div class="detail">Across all terms</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Paid This Term</h3>
+                    <div class="value" id="paid-term">$0.00</div>
+                    <div class="detail">Current period</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Outstanding</h3>
+                    <div class="value" id="outstanding">$0.00</div>
+                    <div class="detail">Overdue payments</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Next Due</h3>
+                    <div class="value" id="next-due">TBD</div>
+                    <div class="detail">Payment date</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>💳 Make a Payment</h2>
+            <div class="form-group">
+                <label>Amount</label>
+                <input type="number" id="payment-amount" placeholder="Enter amount" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+                <label>Payment Method</label>
+                <div class="payment-method">
+                    <input type="radio" name="method" value="credit_card"> Credit Card
+                </div>
+                <div class="payment-method">
+                    <input type="radio" name="method" value="bank_transfer"> Bank Transfer
+                </div>
+                <div class="payment-method">
+                    <input type="radio" name="method" value="check"> Check
+                </div>
+                <div class="payment-method">
+                    <input type="radio" name="method" value="cash"> Cash
+                </div>
+            </div>
+            <button onclick="processPayment()">Submit Payment</button>
+        </div>
+
+        <div class="section">
+            <h2>📋 Payment History</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Method</th>
+                    </tr>
+                </thead>
+                <tbody id="payment-history">
+                    <tr><td colspan="5" style="text-align: center;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>⚠️ Overdue Payments</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Due Date</th>
+                        <th>Days Overdue</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="overdue-table">
+                    <tr><td colspan="5" style="text-align: center;">No overdue payments</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        async function load() {
+            try {
+                const payments = await window.api.getPayments?.() || { data: [] };
+                const paymentList = payments.data || payments || [];
+                displayPayments(paymentList);
+                calculateStats(paymentList);
+            } catch (err) {
+                console.error('Error loading payments:', err);
+            }
+        }
+
+        function displayPayments(payments) {
+            const tbody = document.getElementById('payment-history');
+            if (!payments || payments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No payment history</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = payments.map(p => {
+                const amount = typeof p.amount === 'number' ? p.amount.toFixed(2) : p.amount;
+                return `
+                    <tr>
+                        <td>${new Date(p.date || p.created_at).toLocaleDateString()}</td>
+                        <td>${p.description || 'Payment'}</td>
+                        <td>$${amount}</td>
+                        <td><span class="status ${p.status || 'pending'}">${(p.status || 'pending').toUpperCase()}</span></td>
+                        <td>${p.method || 'N/A'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function calculateStats(payments) {
+            const now = new Date();
+            let totalDue = 0;
+            let paidThisTerm = 0;
+            let outstanding = 0;
+
+            payments.forEach(p => {
+                const amount = parseFloat(p.amount) || 0;
+                if (p.status === 'paid') {
+                    paidThisTerm += amount;
+                } else if (p.status === 'pending' || !p.status) {
+                    if (new Date(p.due_date) < now) {
+                        outstanding += amount;
+                    }
+                    totalDue += amount;
+                }
+            });
+
+            document.getElementById('total-due').textContent = '$' + totalDue.toFixed(2);
+            document.getElementById('paid-term').textContent = '$' + paidThisTerm.toFixed(2);
+            document.getElementById('outstanding').textContent = '$' + outstanding.toFixed(2);
+        }
+
+        async function processPayment() {
+            const amount = document.getElementById('payment-amount').value;
+            const method = document.querySelector('input[name="method"]:checked')?.value;
+
+            if (!amount || !method) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            try {
+                await window.api.makePayment?.({ amount: parseFloat(amount), method });
+                alert('Payment submitted successfully. Please wait for confirmation.');
+                document.getElementById('payment-amount').value = '';
+                load();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('sms_token');
+            localStorage.removeItem('sms_user');
+            window.location.href = 'login.html';
+        }
+
+        if (!localStorage.getItem('sms_token')) {
+            window.location.href = 'login.html';
+        } else {
+            load();
+        }
+    </script>
+</body>
+</html>

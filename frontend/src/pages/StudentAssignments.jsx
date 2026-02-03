@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../api'
-import ui from '../ui'
+import { showToast } from '../ui'
 
 export default function StudentAssignments() {
   const [assignments, setAssignments] = useState([])
@@ -34,7 +34,7 @@ export default function StudentAssignments() {
         setAssignments(allAssignments)
       }
     } catch (error) {
-      ui.toast.error('Failed to load assignments')
+      showToast('Failed to load assignments', 'error')
     } finally {
       setLoading(false)
     }
@@ -46,11 +46,11 @@ export default function StudentAssignments() {
         assignment_id: assignmentId,
         file_url: fileUrl
       })
-      ui.toast.success('Assignment submitted successfully')
+      showToast('Assignment submitted successfully', 'success')
       setSubmittingAssignment(null)
       loadData()
     } catch (error) {
-      ui.toast.error(error.message || 'Failed to submit assignment')
+      showToast(error.message || 'Failed to submit assignment', 'error')
     }
   }
 
@@ -182,7 +182,7 @@ function SubmitAssignmentModal({ assignment, onSubmit, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!fileUrl.trim()) {
-      ui.toast.error('Please provide a file URL or link to your submission')
+      showToast('Please provide a file URL or link to your submission', 'error')
       return
     }
 

@@ -28,6 +28,7 @@ type User struct {
 	Address      string    `gorm:"type:text" json:"address"`
 	ProfileImage string    `json:"profile_image"`
 	IsActive     bool      `gorm:"default:true" json:"is_active"`
+	IsSuperAdmin bool      `gorm:"default:false;index" json:"is_super_admin"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 

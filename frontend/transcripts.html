@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcripts</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; }
+        .header button { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        .section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .section h2 { color: #2c3e50; border-bottom: 2px solid #667eea; padding-bottom: 10px; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { display: inline-block; padding: 10px 15px; background: white; border-radius: 4px; margin-right: 10px; text-decoration: none; color: #667eea; border: 1px solid #ddd; }
+        .nav a:hover { background: #667eea; color: white; }
+        .transcript-header { background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #667eea; }
+        .transcript-header h3 { color: #2c3e50; margin-bottom: 10px; }
+        .transcript-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .info-item { }
+        .info-item label { font-weight: 600; color: #666; font-size: 12px; }
+        .info-item .value { color: #2c3e50; font-size: 16px; font-weight: 500; }
+        .gpa-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
+        .gpa-card h4 { opacity: 0.9; margin-bottom: 10px; }
+        .gpa-card .gpa-value { font-size: 42px; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f9f9f9; padding: 12px; text-align: left; font-weight: 600; color: #2c3e50; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        tr:hover { background: #f9f9f9; }
+        .grade { padding: 4px 8px; border-radius: 3px; font-weight: 600; }
+        .grade.excellent { background: #27ae60; color: white; }
+        .grade.good { background: #3498db; color: white; }
+        .grade.average { background: #f39c12; color: white; }
+        .grade.poor { background: #e74c3c; color: white; }
+        button { background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+        button:hover { background: #5568d3; }
+        .semester-group { margin-bottom: 30px; }
+        .semester-header { background: #f0f0f0; padding: 12px; border-radius: 4px; margin-bottom: 15px; font-weight: 600; color: #2c3e50; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📜 Academic Transcript</h1>
+            <button onclick="logout()">Logout</button>
+        </div>
+
+        <div class="nav">
+            <a href="admin-dashboard.html">Dashboard</a>
+            <a href="grades.html">Grades</a>
+            <a href="transcripts.html">Transcripts</a>
+        </div>
+
+        <div class="section" id="student-info">
+            <h2>👤 Student Information</h2>
+            <div class="transcript-info">
+                <div class="info-item">
+                    <label>Student Name</label>
+                    <div class="value" id="student-name">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <label>Student ID</label>
+                    <div class="value" id="student-id">-</div>
+                </div>
+                <div class="info-item">
+                    <label>Program</label>
+                    <div class="value" id="program">General Studies</div>
+                </div>
+                <div class="info-item">
+                    <label>Enrollment Date</label>
+                    <div class="value" id="enrollment-date">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Overall GPA</h2>
+            <div class="gpa-card">
+                <h4>Cumulative GPA</h4>
+                <div class="gpa-value" id="overall-gpa">3.85</div>
+            </div>
+            <button onclick="downloadTranscript()">📥 Download Transcript (PDF)</button>
+            <button onclick="printTranscript()" style="margin-left: 10px;">🖨️ Print</button>
+        </div>
+
+        <div class="section">
+            <h2>📚 Grade History</h2>
+            <div id="grades-by-semester">
+                <p style="text-align: center;">Loading grades...</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎖️ Academic Standing</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Term</th>
+                        <th>Status</th>
+                        <th>Credits</th>
+                        <th>GPA</th>
+                    </tr>
+                </thead>
+                <tbody id="standing-tbody">
+                    <tr><td colspan="4" style="text-align: center;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        async function load() {
+            try {
+                const profile = await window.api.getProfile?.() || {};
+                const user = profile.data || profile;
+                document.getElementById('student-name').textContent = user.name || 'Unknown';
+                document.getElementById('student-id').textContent = user.id || '-';
+                document.getElementById('enrollment-date').textContent = user.created_at ? new Date(user.created_at).toLocaleDateString() : '-';
+
+                const gradesRes = await window.api.getMyGrades?.() || { data: [] };
+                const grades = gradesRes.data || gradesRes || [];
+                displayGradesBySemester(grades);
+                calculateGPA(grades);
+            } catch (err) {
+                console.error('Error loading transcript:', err);
+            }
+        }
+
+        function displayGradesBySemester(grades) {
+            const el = document.getElementById('grades-by-semester');
+            if (!grades || grades.length === 0) {
+                el.innerHTML = '<p style="text-align: center;">No grades recorded yet</p>';
+                return;
+            }
+
+            // Group by semester (assuming created_at year-semester)
+            const bySemester = {};
+            grades.forEach(g => {
+                const date = new Date(g.created_at);
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                const semester = month < 6 ? 'Spring' : 'Fall';
+                const key = year + ' ' + semester;
+                if (!bySemester[key]) bySemester[key] = [];
+                bySemester[key].push(g);
+            });
+
+            let html = '';
+            Object.keys(bySemester).sort().reverse().forEach(semester => {
+                const semesterGrades = bySemester[semester];
+                const semesterGPA = calculateSemesterGPA(semesterGrades);
+
+                html += `
+                    <div class="semester-group">
+                        <div class="semester-header">${semester} - GPA: ${semesterGPA.toFixed(2)}</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Credits</th>
+                                    <th>Grade</th>
+                                    <th>Quality Points</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${semesterGrades.map(g => `
+                                    <tr>
+                                        <td>${g.course?.title || 'Course ' + g.course_id}</td>
+                                        <td>3</td>
+                                        <td><span class="grade ${getGradeClass(g.grade)}">${g.grade || 'N/A'}</span></td>
+                                        <td>${(g.grade ? getQualityPoints(g.grade) * 3 : 0).toFixed(1)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            });
+
+            el.innerHTML = html;
+        }
+
+        function calculateSemesterGPA(grades) {
+            if (!grades || grades.length === 0) return 0;
+            let totalQP = 0;
+            let totalCredits = 0;
+            grades.forEach(g => {
+                const qp = getQualityPoints(g.grade || 0);
+                totalQP += qp * 3;
+                totalCredits += 3;
+            });
+            return totalCredits > 0 ? totalQP / totalCredits : 0;
+        }
+
+        function calculateGPA(grades) {
+            if (!grades || grades.length === 0) {
+                document.getElementById('overall-gpa').textContent = 'N/A';
+                return;
+            }
+            const gpa = calculateSemesterGPA(grades);
+            document.getElementById('overall-gpa').textContent = gpa.toFixed(2);
+        }
+
+        function getQualityPoints(grade) {
+            const g = parseFloat(grade) || 0;
+            if (g >= 90) return 4.0;
+            if (g >= 80) return 3.5;
+            if (g >= 70) return 3.0;
+            if (g >= 60) return 2.0;
+            return 0;
+        }
+
+        function getGradeClass(grade) {
+            const g = parseFloat(grade) || 0;
+            if (g >= 90) return 'excellent';
+            if (g >= 80) return 'good';
+            if (g >= 70) return 'average';
+            return 'poor';
+        }
+
+        function downloadTranscript() {
+            alert('Transcript download functionality would be implemented with PDF generation library');
+        }
+
+        function printTranscript() {
+            window.print();
+        }
+
+        function logout() {
+            localStorage.removeItem('sms_token');
+            localStorage.removeItem('sms_user');
+            window.location.href = 'login.html';
+        }
+
+        if (!localStorage.getItem('sms_token')) {
+            window.location.href = 'login.html';
+        } else {
+            load();
+        }
+    </script>
+</body>
+</html>

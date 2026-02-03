@@ -40,8 +40,10 @@ func (r *notificationRepository) FindByUserID(userID uint, page, limit int) ([]m
 	var notifications []models.Notification
 	var total int64
 	offset := (page - 1) * limit
-	err := r.db.Where("user_id = ?", userID).Count(&total).
-		Preload("User").
+	if err := r.db.Model(&models.Notification{}).Where("user_id = ?", userID).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.Where("user_id = ?", userID).
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).
@@ -52,7 +54,6 @@ func (r *notificationRepository) FindByUserID(userID uint, page, limit int) ([]m
 func (r *notificationRepository) FindUnread(userID uint) ([]models.Notification, error) {
 	var notifications []models.Notification
 	err := r.db.Where("user_id = ? AND is_read = ?", userID, false).
-		Preload("User").
 		Order("created_at DESC").
 		Find(&notifications).Error
 	return notifications, err

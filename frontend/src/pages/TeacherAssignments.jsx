@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../api'
-import ui from '../ui'
+import { showToast } from '../ui'
 
 export default function TeacherAssignments() {
   const [assignments, setAssignments] = useState([])
@@ -23,7 +23,7 @@ export default function TeacherAssignments() {
       setAssignments(assignmentsRes.assignments || [])
       setCourses(coursesRes || [])
     } catch (error) {
-      ui.toast.error('Failed to load assignments')
+      showToast('Failed to load assignments', 'error')
     } finally {
       setLoading(false)
     }
@@ -32,11 +32,11 @@ export default function TeacherAssignments() {
   const handleCreateAssignment = async (formData) => {
     try {
       await api.createAssignment(formData)
-      ui.toast.success('Assignment created successfully')
+      showToast('Assignment created successfully', 'success')
       setShowCreateForm(false)
       loadData()
     } catch (error) {
-      ui.toast.error(error.message || 'Failed to create assignment')
+      showToast(error.message || 'Failed to create assignment', 'error')
     }
   }
 
@@ -45,10 +45,10 @@ export default function TeacherAssignments() {
 
     try {
       await api.deleteAssignment(assignmentId)
-      ui.toast.success('Assignment deleted successfully')
+      showToast('Assignment deleted successfully', 'success')
       loadData()
     } catch (error) {
-      ui.toast.error('Failed to delete assignment')
+      showToast('Failed to delete assignment', 'error')
     }
   }
 
@@ -139,7 +139,7 @@ function CreateAssignmentModal({ courses, onSubmit, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!formData.course_id || !formData.title || !formData.due_date) {
-      ui.toast.error('Please fill in all required fields')
+      showToast('Please fill in all required fields', 'error')
       return
     }
 

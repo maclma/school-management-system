@@ -42,6 +42,8 @@ export default {
   getCourses: (page=1, limit=50) => request(`/courses?page=${page}&limit=${limit}`),
   getCourse: (id) => request(`/courses/${id}`),
   createCourse: (payload) => request('/courses', { method:'POST', body: JSON.stringify(payload) }),
+  updateCourse: (id, payload) => request(`/courses/${id}`, { method:'PUT', body: JSON.stringify(payload) }),
+  deleteCourse: (id) => request(`/courses/${id}`, { method:'DELETE' }),
   enroll: (studentId, courseId) => request('/enrollments', { method:'POST', body: JSON.stringify({ student_id: studentId, course_id: courseId }) }),
   getEnrollmentsByStudent: (studentId) => request(`/enrollments/by-student/${studentId}`),
   getCourseEnrollments: (courseId) => request(`/enrollments/by-course/${courseId}`),

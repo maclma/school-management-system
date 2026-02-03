@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grades Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; }
+        .header button { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        .section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .section h2 { color: #2c3e50; border-bottom: 2px solid #667eea; padding-bottom: 10px; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { display: inline-block; padding: 10px 15px; background: white; border-radius: 4px; margin-right: 10px; text-decoration: none; color: #667eea; border: 1px solid #ddd; }
+        .nav a:hover { background: #667eea; color: white; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f9f9f9; padding: 12px; text-align: left; font-weight: 600; color: #2c3e50; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        tr:hover { background: #f9f9f9; }
+        button { background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #5568d3; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        .filter { margin-bottom: 20px; }
+        .grade-card { background: #f9f9f9; padding: 15px; border-radius: 4px; margin-bottom: 10px; border-left: 4px solid #667eea; }
+        .grade-card strong { color: #2c3e50; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 500; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Grades Management</h1>
+            <button onclick="logout()">Logout</button>
+        </div>
+
+        <div class="nav">
+            <a href="admin-dashboard.html">Dashboard</a>
+            <a href="grades.html">Grades</a>
+            <a href="attendance.html">Attendance</a>
+            <a href="assignments.html">Assignments</a>
+            <a href="announcements.html">Announcements</a>
+        </div>
+
+        <div class="section">
+            <h2>📝 Record Grade</h2>
+            <div class="filter">
+                <div class="form-group">
+                    <label>Student ID</label>
+                    <input type="number" id="student-id" placeholder="Enter student ID">
+                </div>
+                <div class="form-group">
+                    <label>Course ID</label>
+                    <input type="number" id="course-id" placeholder="Enter course ID">
+                </div>
+                <div class="form-group">
+                    <label>Grade (0-100)</label>
+                    <input type="number" id="grade-value" min="0" max="100" placeholder="Enter grade">
+                </div>
+                <button onclick="recordGrade()">Record Grade</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 My Grades</h2>
+            <div id="grades-list">
+                <p style="text-align: center;">Loading grades...</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📈 Grade Statistics</h2>
+            <table id="stats-table">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Average Grade</th>
+                        <th>Highest</th>
+                        <th>Lowest</th>
+                    </tr>
+                </thead>
+                <tbody id="stats-tbody">
+                    <tr><td colspan="4" style="text-align: center;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        async function load() {
+            try {
+                const gradesRes = await window.api.getMyGrades?.() || { data: [] };
+                const grades = gradesRes.data || gradesRes || [];
+                displayGrades(grades);
+            } catch (err) {
+                console.error('Error loading grades:', err);
+                document.getElementById('grades-list').innerHTML = '<p style="color: #e74c3c;">Error loading grades</p>';
+            }
+        }
+
+        function displayGrades(grades) {
+            const el = document.getElementById('grades-list');
+            if (!grades || grades.length === 0) {
+                el.innerHTML = '<p style="text-align: center; color: #999;">No grades recorded yet</p>';
+                return;
+            }
+
+            el.innerHTML = grades.map(g => `
+                <div class="grade-card">
+                    <strong>${g.course?.title || 'Course ' + g.course_id}</strong><br>
+                    <span style="font-size: 18px; color: #667eea;">Grade: ${g.grade || 'N/A'}</span><br>
+                    <small style="color: #999;">Recorded: ${new Date(g.created_at).toLocaleDateString()}</small>
+                </div>
+            `).join('');
+        }
+
+        async function recordGrade() {
+            const studentId = document.getElementById('student-id').value;
+            const courseId = document.getElementById('course-id').value;
+            const grade = document.getElementById('grade-value').value;
+
+            if (!studentId || !courseId || !grade) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            try {
+                await window.api.recordGrade?.({ student_id: parseInt(studentId), course_id: parseInt(courseId), grade: parseFloat(grade) });
+                alert('Grade recorded successfully');
+                document.getElementById('student-id').value = '';
+                document.getElementById('course-id').value = '';
+                document.getElementById('grade-value').value = '';
+                load();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('sms_token');
+            localStorage.removeItem('sms_user');
+            window.location.href = 'login.html';
+        }
+
+        if (!localStorage.getItem('sms_token')) {
+            window.location.href = 'login.html';
+        } else {
+            load();
+        }
+    </script>
+</body>
+</html>

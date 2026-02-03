@@ -39,8 +39,10 @@ func (r *gradeTranscriptRepository) FindByStudentID(studentID uint, page, limit 
 	var transcripts []models.GradeTranscript
 	var total int64
 	offset := (page - 1) * limit
-	err := r.db.Where("student_id = ?", studentID).Count(&total).
-		Preload("Student").
+	if err := r.db.Model(&models.GradeTranscript{}).Where("student_id = ?", studentID).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.Where("student_id = ?", studentID).
 		Order("year DESC, transcript_semester DESC").
 		Limit(limit).
 		Offset(offset).
@@ -67,7 +69,6 @@ func (r *gradeTranscriptRepository) Delete(id uint) error {
 func (r *gradeTranscriptRepository) FindLatestByStudent(studentID uint) (*models.GradeTranscript, error) {
 	var transcript models.GradeTranscript
 	err := r.db.Where("student_id = ?", studentID).
-		Preload("Student").
 		Order("year DESC, transcript_semester DESC").
 		First(&transcript).Error
 	return &transcript, err

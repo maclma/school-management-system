@@ -182,8 +182,8 @@ func main() {
 	router.Use(middleware.ValidationMiddleware())
 	router.Use(middleware.MaxBodySizeMiddleware(10 * 1024 * 1024)) // 10MB limit
 
-	// Rate limiting on public routes
-	router.Use(middleware.APIRateLimit())
+	// Rate limiting on public routes (DISABLED)
+	// router.Use(middleware.APIRateLimit())
 
 	// Health endpoint (public, no auth required)
 	router.GET("/api/health", func(c *gin.Context) {
@@ -192,7 +192,7 @@ func main() {
 
 	// Public routes
 	public := router.Group("/api/auth")
-	public.Use(middleware.AuthRateLimit()) // Stricter rate limiting for auth
+	// public.Use(middleware.AuthRateLimit()) // Stricter rate limiting for auth (DISABLED)
 	{
 		public.POST("/login", authHandler.Login)
 		public.POST("/register", authHandler.Register)
@@ -268,6 +268,10 @@ func main() {
 			admin.GET("/dashboard", adminHandler.GetDashboardStats)
 			admin.GET("/health", adminHandler.SystemHealth)
 
+			// Super Admin Management (only super admins can manage)
+			admin.PUT("/users/:id/super-admin", userHandler.SetSuperAdmin)
+			admin.GET("/super-admins", userHandler.GetSuperAdmins)
+
 			admin.GET("/enrollments", enrollmentHandler.GetAllEnrollments)
 			admin.POST("/enrollments/:id/approve", enrollmentHandler.ApproveEnrollment)
 			admin.POST("/enrollments/:id/reject", enrollmentHandler.RejectEnrollment)
@@ -281,6 +285,85 @@ func main() {
 			admin.GET("/teachers/:id/courses", teacherHandler.GetTeacherCourses)
 		}
 
+		// Notifications
+		api.POST("/notifications", notificationHandler.Create)
+		api.GET("/notifications", notificationHandler.GetMyNotifications)
+		api.GET("/notifications/unread", notificationHandler.GetUnread)
+		api.PUT("/notifications/:id/read", notificationHandler.MarkAsRead)
+		api.PUT("/notifications/mark-all-read", notificationHandler.MarkAllAsRead)
+		api.DELETE("/notifications/:id", notificationHandler.Delete)
+
+		// Messages
+		api.POST("/messages", messageHandler.SendMessage)
+		api.GET("/messages/inbox", messageHandler.GetInbox)
+		api.GET("/messages/conversation/:user_id", messageHandler.GetConversation)
+		api.GET("/messages/unread", messageHandler.CountUnread)
+		api.PUT("/messages/:id/read", messageHandler.MarkAsRead)
+
+		// Announcements
+		api.GET("/announcements", announcementHandler.GetAll)
+		api.GET("/announcements/active", announcementHandler.GetActive)
+		api.POST("/announcements", announcementHandler.Create)
+		api.PUT("/announcements/:id", announcementHandler.Update)
+		api.DELETE("/announcements/:id", announcementHandler.Delete)
+
+		// Advanced Search
+		api.GET("/search/announcements", searchHandler.SearchAnnouncements)
+		api.GET("/search/payments", searchHandler.SearchPayments)
+		api.GET("/search/students", searchHandler.SearchStudents)
+		api.GET("/search/grades", searchHandler.SearchGradesByRange)
+		api.GET("/search/overdue-payments", searchHandler.SearchOverduePayments)
+
+		// CSV Exports
+		api.GET("/export/payments", exportHandler.ExportPaymentsCSV)
+		api.GET("/export/grades", exportHandler.ExportGradesCSV)
+		api.GET("/export/attendance", exportHandler.ExportAttendanceCSV)
+		api.GET("/export/transcript/:student_id", exportHandler.ExportStudentTranscript)
+		api.GET("/export/enrollments", exportHandler.ExportEnrollments)
+
+		// Attendance Automation
+		api.GET("/attendance/stats/course/:course_id", attendanceAutomationHandler.GetAttendanceStats)
+		api.GET("/attendance/percentage/:student_id/:course_id", attendanceAutomationHandler.GetStudentAttendancePercentage)
+		api.POST("/attendance/check-low", attendanceAutomationHandler.CheckLowAttendance)
+		api.GET("/attendance/low/:threshold", attendanceAutomationHandler.GetStudentsWithLowAttendance)
+		api.GET("/attendance/report/:course_id", attendanceAutomationHandler.GetAttendanceReport)
+
+		// Grade Auto-Calculation
+		api.POST("/grades/auto", gradeAutoCalcHandler.RecordGradeWithAutoCalc)
+		api.GET("/grades/course-average/:course_id", gradeAutoCalcHandler.GetCourseAverage)
+		api.GET("/grades/distribution/:course_id", gradeAutoCalcHandler.GetGradeDistribution)
+		api.GET("/grades/student-stats/:student_id", gradeAutoCalcHandler.GetStudentGradeStats)
+
+		// Rubrics
+		api.POST("/rubrics", rubricHandler.CreateRubric)
+		api.GET("/rubrics/:id", rubricHandler.GetRubric)
+		api.GET("/rubrics/assignment/:assignment_id", rubricHandler.GetRubricsByAssignment)
+		api.PUT("/rubrics/:id", rubricHandler.UpdateRubric)
+		api.DELETE("/rubrics/:id", rubricHandler.DeleteRubric)
+		api.POST("/rubrics/score", rubricHandler.ScoreSubmission)
+		api.GET("/rubrics/score/:submission_id", rubricHandler.GetSubmissionScore)
+
+		// Timetable
+		api.GET("/timetable", timetableHandler.GetAll)
+		api.GET("/timetable/course/:course_id", timetableHandler.GetByCourseID)
+		api.GET("/timetable/teacher/:teacher_id", timetableHandler.GetByTeacherID)
+		api.GET("/timetable/day/:day", timetableHandler.GetByDay)
+		api.POST("/timetable", timetableHandler.Create)
+		api.PUT("/timetable/:id", timetableHandler.Update)
+		api.DELETE("/timetable/:id", timetableHandler.Delete)
+
+		// Grade Transcripts
+		api.GET("/transcripts/student/:student_id", gradeTranscriptHandler.GetByStudentID)
+		api.GET("/transcripts/latest/:student_id", gradeTranscriptHandler.GetLatest)
+		api.GET("/transcripts/gpa/:student_id", gradeTranscriptHandler.GetGPA)
+
+		// Payments
+		api.POST("/payments", paymentHandler.Create)
+		api.GET("/payments/student/:student_id", paymentHandler.GetByStudent)
+		api.GET("/payments", paymentHandler.GetAll)
+		api.PUT("/payments/:id", paymentHandler.Update)
+		api.GET("/payments/balance/:student_id", paymentHandler.GetStudentBalance)
+
 		teacher := api.Group("/teacher")
 		teacher.Use(middleware.RoleMiddleware(models.RoleTeacher))
 		{
@@ -292,105 +375,26 @@ func main() {
 			teacher.GET("/assignments", assignmentHandler.GetAssignmentsByTeacher)
 			teacher.GET("/submissions/assignment/:assignment_id", assignmentHandler.GetSubmissionsByAssignment)
 			teacher.PUT("/submissions/:submission_id/grade", assignmentHandler.GradeSubmission)
-
-			// Notifications
-			api.POST("/notifications", notificationHandler.Create)
-			api.GET("/notifications", notificationHandler.GetMyNotifications)
-			api.GET("/notifications/unread", notificationHandler.GetUnread)
-			api.PUT("/notifications/:id/read", notificationHandler.MarkAsRead)
-			api.PUT("/notifications/mark-all-read", notificationHandler.MarkAllAsRead)
-			api.DELETE("/notifications/:id", notificationHandler.Delete)
-
-			// Messages
-			api.POST("/messages", messageHandler.SendMessage)
-			api.GET("/messages/inbox", messageHandler.GetInbox)
-			api.GET("/messages/conversation/:user_id", messageHandler.GetConversation)
-			api.GET("/messages/unread", messageHandler.CountUnread)
-			api.PUT("/messages/:id/read", messageHandler.MarkAsRead)
-
-			// Announcements
-			api.GET("/announcements", announcementHandler.GetAll)
-			api.GET("/announcements/active", announcementHandler.GetActive)
-			api.POST("/announcements", announcementHandler.Create)
-			api.PUT("/announcements/:id", announcementHandler.Update)
-			api.DELETE("/announcements/:id", announcementHandler.Delete)
-
-			// Advanced Search
-			api.GET("/search/announcements", searchHandler.SearchAnnouncements)
-			api.GET("/search/payments", searchHandler.SearchPayments)
-			api.GET("/search/students", searchHandler.SearchStudents)
-			api.GET("/search/grades", searchHandler.SearchGradesByRange)
-			api.GET("/search/overdue-payments", searchHandler.SearchOverduePayments)
-
-			// CSV Exports
-			api.GET("/export/payments", exportHandler.ExportPaymentsCSV)
-			api.GET("/export/grades", exportHandler.ExportGradesCSV)
-			api.GET("/export/attendance", exportHandler.ExportAttendanceCSV)
-			api.GET("/export/transcript/:student_id", exportHandler.ExportStudentTranscript)
-			api.GET("/export/enrollments", exportHandler.ExportEnrollments)
-
-			// Attendance Automation
-			api.GET("/attendance/stats/course/:course_id", attendanceAutomationHandler.GetAttendanceStats)
-			api.GET("/attendance/percentage/:student_id/:course_id", attendanceAutomationHandler.GetStudentAttendancePercentage)
-			api.POST("/attendance/check-low", attendanceAutomationHandler.CheckLowAttendance)
-			api.GET("/attendance/low/:threshold", attendanceAutomationHandler.GetStudentsWithLowAttendance)
-			api.GET("/attendance/report/:course_id", attendanceAutomationHandler.GetAttendanceReport)
-
-			// Grade Auto-Calculation
-			api.POST("/grades/auto", gradeAutoCalcHandler.RecordGradeWithAutoCalc)
-			api.GET("/grades/course-average/:course_id", gradeAutoCalcHandler.GetCourseAverage)
-			api.GET("/grades/distribution/:course_id", gradeAutoCalcHandler.GetGradeDistribution)
-			api.GET("/grades/student-stats/:student_id", gradeAutoCalcHandler.GetStudentGradeStats)
-
-			// Rubrics
-			api.POST("/rubrics", rubricHandler.CreateRubric)
-			api.GET("/rubrics/:id", rubricHandler.GetRubric)
-			api.GET("/rubrics/assignment/:assignment_id", rubricHandler.GetRubricsByAssignment)
-			api.PUT("/rubrics/:id", rubricHandler.UpdateRubric)
-			api.DELETE("/rubrics/:id", rubricHandler.DeleteRubric)
-			api.POST("/rubrics/score", rubricHandler.ScoreSubmission)
-			api.GET("/rubrics/score/:submission_id", rubricHandler.GetSubmissionScore)
-
-			// Timetable
-			api.GET("/timetable", timetableHandler.GetAll)
-			api.GET("/timetable/course/:course_id", timetableHandler.GetByCourseID)
-			api.GET("/timetable/teacher/:teacher_id", timetableHandler.GetByTeacherID)
-			api.GET("/timetable/day/:day", timetableHandler.GetByDay)
-			api.POST("/timetable", timetableHandler.Create)
-			api.PUT("/timetable/:id", timetableHandler.Update)
-			api.DELETE("/timetable/:id", timetableHandler.Delete)
-
-			// Grade Transcripts
-			api.GET("/transcripts/student/:student_id", gradeTranscriptHandler.GetByStudentID)
-			api.GET("/transcripts/latest/:student_id", gradeTranscriptHandler.GetLatest)
-			api.GET("/transcripts/gpa/:student_id", gradeTranscriptHandler.GetGPA)
-
-			// Payments
-			api.POST("/payments", paymentHandler.Create)
-			api.GET("/payments/student/:student_id", paymentHandler.GetByStudent)
-			api.GET("/payments", paymentHandler.GetAll)
-			api.PUT("/payments/:id", paymentHandler.Update)
-			api.GET("/payments/balance/:student_id", paymentHandler.GetStudentBalance)
-
-			// System Settings (admin only)
-			admin.GET("/settings", systemSettingHandler.GetAll)
-			admin.GET("/settings/:key", systemSettingHandler.GetByKey)
-			admin.POST("/settings", systemSettingHandler.Create)
-			admin.PUT("/settings/:id", systemSettingHandler.Update)
-			admin.DELETE("/settings/:id", systemSettingHandler.Delete)
-
-			// Backups (admin only)
-			admin.GET("/backups", backupHandler.GetAll)
-			admin.GET("/backups/latest", backupHandler.GetLatest)
-			admin.GET("/backups/:id", backupHandler.GetByID)
-			admin.DELETE("/backups/:id", backupHandler.Delete)
-
-			// Import batches (admin only)
-			admin.GET("/imports", importBatchHandler.GetAll)
-			admin.GET("/imports/:id", importBatchHandler.GetByID)
-			admin.GET("/imports/status/:status", importBatchHandler.GetByStatus)
-			admin.DELETE("/imports/:id", importBatchHandler.Delete)
 		}
+
+		// System Settings (admin only)
+		admin.GET("/settings", systemSettingHandler.GetAll)
+		admin.GET("/settings/:key", systemSettingHandler.GetByKey)
+		admin.POST("/settings", systemSettingHandler.Create)
+		admin.PUT("/settings/:id", systemSettingHandler.Update)
+		admin.DELETE("/settings/:id", systemSettingHandler.Delete)
+
+		// Backups (admin only)
+		admin.GET("/backups", backupHandler.GetAll)
+		admin.GET("/backups/latest", backupHandler.GetLatest)
+		admin.GET("/backups/:id", backupHandler.GetByID)
+		admin.DELETE("/backups/:id", backupHandler.Delete)
+
+		// Import batches (admin only)
+		admin.GET("/imports", importBatchHandler.GetAll)
+		admin.GET("/imports/:id", importBatchHandler.GetByID)
+		admin.GET("/imports/status/:status", importBatchHandler.GetByStatus)
+		admin.DELETE("/imports/:id", importBatchHandler.Delete)
 
 		student := api.Group("/student")
 		student.Use(middleware.RoleMiddleware(models.RoleStudent))
@@ -449,21 +453,22 @@ func createAdminUser(db *gorm.DB, cfg *config.Config, logger *logrus.Logger) {
 
 	if count == 0 {
 		adminUser := &models.User{
-			FirstName:   "Admin",
-			LastName:    "User",
-			Email:       adminEmail,
-			Password:    adminPass,
-			Phone:       "1234567890",
-			Role:        models.RoleAdmin,
-			DateOfBirth: time.Now().AddDate(-30, 0, 0),
-			Address:     "School Address",
-			IsActive:    true,
+			FirstName:    "Admin",
+			LastName:     "User",
+			Email:        adminEmail,
+			Password:     adminPass,
+			Phone:        "1234567890",
+			Role:         models.RoleAdmin,
+			DateOfBirth:  time.Now().AddDate(-30, 0, 0),
+			Address:      "School Address",
+			IsActive:     true,
+			IsSuperAdmin: true,
 		}
 
 		if err := db.Create(adminUser).Error; err != nil {
 			logger.Warnf("Failed to create admin user: %v", err)
 		} else {
-			logger.Info("Admin user created successfully")
+			logger.Info("Admin user created successfully (set as Super Admin)")
 			if cfg.AppEnv != "production" {
 				logger.Infof("Admin credentials -> email: %s password: %s", adminUser.Email, adminPass)
 			}
@@ -480,6 +485,11 @@ func createAdminUser(db *gorm.DB, cfg *config.Config, logger *logrus.Logger) {
 		}
 		if err := q.First(&admin).Error; err == nil {
 			admin.Password = envPass
+			// Ensure the main admin is a super admin
+			if !admin.IsSuperAdmin {
+				admin.IsSuperAdmin = true
+				logger.Info("Setting main admin as Super Admin")
+			}
 			if err := db.Save(&admin).Error; err == nil {
 				logger.Infof("Admin password reset for %s", admin.Email)
 				logger.Infof("Admin credentials -> email: %s password: %s", admin.Email, envPass)

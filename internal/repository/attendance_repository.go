@@ -58,8 +58,10 @@ func (r *attendanceRepository) FindByStudentID(studentID uint, page, limit int) 
 	var total int64
 
 	offset := (page - 1) * limit
-	err := r.db.Where("student_id = ?", studentID).Count(&total).
-		Preload("Course").
+	if err := r.db.Model(&models.Attendance{}).Where("student_id = ?", studentID).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.Where("student_id = ?", studentID).
 		Limit(limit).
 		Offset(offset).
 		Find(&attendances).Error
@@ -72,9 +74,10 @@ func (r *attendanceRepository) FindByCourseID(courseID uint, page, limit int) ([
 	var total int64
 
 	offset := (page - 1) * limit
-	err := r.db.Where("course_id = ?", courseID).Count(&total).
-		Preload("Student").
-		Preload("Student.User").
+	if err := r.db.Model(&models.Attendance{}).Where("course_id = ?", courseID).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.Where("course_id = ?", courseID).
 		Limit(limit).
 		Offset(offset).
 		Find(&attendances).Error
@@ -87,9 +90,10 @@ func (r *attendanceRepository) FindAll(page, limit int) ([]models.Attendance, in
 	var total int64
 
 	offset := (page - 1) * limit
-	err := r.db.Model(&models.Attendance{}).Count(&total).
-		Preload("Student").
-		Preload("Course").
+	if err := r.db.Model(&models.Attendance{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.
 		Limit(limit).
 		Offset(offset).
 		Find(&attendances).Error
@@ -108,8 +112,6 @@ func (r *attendanceRepository) Delete(id uint) error {
 func (r *attendanceRepository) FindByDateRange(startDate, endDate time.Time) ([]models.Attendance, error) {
 	var attendances []models.Attendance
 	err := r.db.Where("date BETWEEN ? AND ?", startDate, endDate).
-		Preload("Student").
-		Preload("Course").
 		Find(&attendances).Error
 
 	return attendances, err
@@ -118,7 +120,6 @@ func (r *attendanceRepository) FindByDateRange(startDate, endDate time.Time) ([]
 func (r *attendanceRepository) FindByStudentDateRange(studentID uint, startDate, endDate time.Time) ([]models.Attendance, error) {
 	var attendances []models.Attendance
 	err := r.db.Where("student_id = ? AND date BETWEEN ? AND ?", studentID, startDate, endDate).
-		Preload("Course").
 		Find(&attendances).Error
 
 	return attendances, err

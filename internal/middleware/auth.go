@@ -51,6 +51,13 @@ func RoleMiddleware(allowedRoles ...models.UserRole) gin.HandlerFunc {
 		}
 
 		role := models.UserRole(userRole.(string))
+
+		// Admins have access to all role-restricted endpoints
+		if role == models.RoleAdmin {
+			c.Next()
+			return
+		}
+
 		allowed := false
 		for _, allowedRole := range allowedRoles {
 			if role == allowedRole {

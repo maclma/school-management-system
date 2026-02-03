@@ -39,8 +39,10 @@ func (r *announcementRepository) FindAll(page, limit int) ([]models.Announcement
 	var announcements []models.Announcement
 	var total int64
 	offset := (page - 1) * limit
-	err := r.db.Count(&total).
-		Preload("CreatedByUser").
+	if err := r.db.Model(&models.Announcement{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).
@@ -52,9 +54,10 @@ func (r *announcementRepository) FindActive(page, limit int) ([]models.Announcem
 	var announcements []models.Announcement
 	var total int64
 	offset := (page - 1) * limit
+	if err := r.db.Model(&models.Announcement{}).Where("is_active = ? AND (expires_at IS NULL OR expires_at > ?)", true, 0).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
 	err := r.db.Where("is_active = ? AND (expires_at IS NULL OR expires_at > ?)", true, 0).
-		Count(&total).
-		Preload("CreatedByUser").
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).
@@ -66,8 +69,10 @@ func (r *announcementRepository) FindByAudience(audience string, page, limit int
 	var announcements []models.Announcement
 	var total int64
 	offset := (page - 1) * limit
-	err := r.db.Where("audience = ?", audience).Count(&total).
-		Preload("CreatedByUser").
+	if err := r.db.Model(&models.Announcement{}).Where("audience = ?", audience).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.Where("audience = ?", audience).
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).

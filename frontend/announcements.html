@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Announcements</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; }
+        .header button { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        .section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .section h2 { color: #2c3e50; border-bottom: 2px solid #38f9d7; padding-bottom: 10px; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { display: inline-block; padding: 10px 15px; background: white; border-radius: 4px; margin-right: 10px; text-decoration: none; color: #38f9d7; border: 1px solid #ddd; }
+        .nav a:hover { background: #38f9d7; color: white; }
+        .announcement { background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #38f9d7; }
+        .announcement h3 { color: #2c3e50; margin-bottom: 10px; }
+        .announcement .meta { display: flex; gap: 15px; margin-bottom: 10px; font-size: 13px; color: #999; }
+        .announcement .content { color: #555; line-height: 1.6; margin-bottom: 15px; }
+        .announcement .actions { display: flex; gap: 10px; }
+        button { background: #38f9d7; color: #2c3e50; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px; }
+        button:hover { background: #1ac3a8; }
+        input, select, textarea { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; }
+        textarea { resize: vertical; width: 100%; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 500; margin-bottom: 5px; }
+        .priority { padding: 4px 8px; border-radius: 3px; font-size: 12px; font-weight: 600; }
+        .priority.high { background: #e74c3c; color: white; }
+        .priority.medium { background: #f39c12; color: white; }
+        .priority.low { background: #3498db; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📢 Announcements</h1>
+            <button onclick="logout()">Logout</button>
+        </div>
+
+        <div class="nav">
+            <a href="admin-dashboard.html">Dashboard</a>
+            <a href="grades.html">Grades</a>
+            <a href="attendance.html">Attendance</a>
+            <a href="assignments.html">Assignments</a>
+            <a href="announcements.html">Announcements</a>
+        </div>
+
+        <div class="section">
+            <h2>✍️ Post Announcement</h2>
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="title" placeholder="Announcement title">
+            </div>
+            <div class="form-group">
+                <label>Content</label>
+                <textarea id="content" placeholder="Announcement content" rows="5"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Priority</label>
+                <select id="priority" style="padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Target Audience</label>
+                <select id="target-audience" style="padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="all">All Users</option>
+                    <option value="students">Students</option>
+                    <option value="teachers">Teachers</option>
+                    <option value="staff">Staff</option>
+                    <option value="admin">Admin Only</option>
+                </select>
+            </div>
+            <button onclick="postAnnouncement()">Post Announcement</button>
+        </div>
+
+        <div class="section">
+            <h2>📣 Recent Announcements</h2>
+            <div id="announcements-list">
+                <p style="text-align: center;">Loading announcements...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        async function load() {
+            try {
+                const res = await window.api.getAnnouncements?.() || { data: [] };
+                const announcements = res.data || res || [];
+                displayAnnouncements(announcements);
+            } catch (err) {
+                console.error('Error loading announcements:', err);
+                document.getElementById('announcements-list').innerHTML = '<p style="color: #e74c3c;">Error loading announcements</p>';
+            }
+        }
+
+        function displayAnnouncements(announcements) {
+            const el = document.getElementById('announcements-list');
+            if (!announcements || announcements.length === 0) {
+                el.innerHTML = '<p style="text-align: center; color: #999;">No announcements yet</p>';
+                return;
+            }
+
+            el.innerHTML = announcements.map(a => `
+                <div class="announcement">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <h3>${a.title}</h3>
+                            <div class="meta">
+                                <span>By ${a.author?.name || 'Admin'}</span>
+                                <span>${new Date(a.created_at).toLocaleDateString()}</span>
+                                <span class="priority ${a.priority || 'low'}">${(a.priority || 'low').toUpperCase()}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="content">${a.content}</div>
+                    <div class="actions">
+                        <button onclick="deleteAnnouncement(${a.id})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function postAnnouncement() {
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            const priority = document.getElementById('priority').value;
+            const targetAudience = document.getElementById('target-audience').value;
+
+            if (!title || !content) {
+                alert('Please fill all required fields');
+                return;
+            }
+
+            try {
+                await window.api.createAnnouncement?.({
+                    title,
+                    content,
+                    priority,
+                    target_audience: targetAudience
+                });
+                alert('Announcement posted successfully');
+                document.getElementById('title').value = '';
+                document.getElementById('content').value = '';
+                load();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function deleteAnnouncement(id) {
+            if (!confirm('Delete this announcement?')) return;
+
+            try {
+                await window.api.deleteAnnouncement?.(id);
+                alert('Announcement deleted');
+                load();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('sms_token');
+            localStorage.removeItem('sms_user');
+            window.location.href = 'login.html';
+        }
+
+        if (!localStorage.getItem('sms_token')) {
+            window.location.href = 'login.html';
+        } else {
+            load();
+        }
+    </script>
+</body>
+</html>

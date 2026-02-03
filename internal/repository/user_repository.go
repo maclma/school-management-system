@@ -14,6 +14,7 @@ type UserRepository interface {
 	Update(user *models.User) error
 	Delete(id uint) error
 	FindAll(page, limit int, role models.UserRole) ([]models.User, int64, error)
+	FindSuperAdmins() ([]models.User, error)
 }
 
 type userRepository struct {
@@ -63,4 +64,12 @@ func (r *userRepository) FindAll(page, limit int, role models.UserRole) ([]model
 		Limit(limit).Offset(offset).Find(&users).Error
 
 	return users, total, err
+}
+
+func (r *userRepository) FindSuperAdmins() ([]models.User, error) {
+	var users []models.User
+	err := r.db.Where("is_super_admin = ?", true).
+		Preload("Student").Preload("Teacher").
+		Find(&users).Error
+	return users, err
 }

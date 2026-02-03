@@ -46,7 +46,7 @@ export default function TeacherPanel() {
   async function submitCreateCourse(e) {
     e.preventDefault(); setLoading(btnRef, true, 'Creating...')
     try {
-      const payload = { name: courseNameRef.current.value, code: courseCodeRef.current.value, department: deptRef.current.value, credits: parseInt(creditsRef.current.value), max_capacity: parseInt(capacityRef.current.value) }
+      const payload = { name: courseNameRef.current.value, course_code: courseCodeRef.current.value, department: deptRef.current.value, credit_hours: parseInt(creditsRef.current.value), max_students: parseInt(capacityRef.current.value) }
       await api.createCourse(payload); showToast('Course created', 'success'); setShowModal(false); await loadCourses()
     } catch (e) { showToast(e.message || 'Failed to create course', 'error') } finally { setLoading(btnRef, false) }
   }

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS - API Integration Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: #2c3e50; color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; }
+        .header h1 { margin-bottom: 10px; }
+        .tests { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .test-card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .test-card h3 { margin-bottom: 15px; color: #2c3e50; }
+        .test-card p { font-size: 14px; color: #666; margin-bottom: 10px; }
+        button { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #2980b9; }
+        button:disabled { background: #95a5a6; cursor: not-allowed; }
+        .result { margin-top: 15px; padding: 10px; border-radius: 4px; font-size: 13px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .loading { background: #cfe9f3; color: #004085; border: 1px solid #b8daff; }
+        .info { font-size: 12px; color: #999; margin-top: 10px; }
+        input { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏫 School Management System - Integration Test</h1>
+            <p>Test backend API connectivity and frontend-backend integration</p>
+        </div>
+
+        <div class="tests">
+            <!-- Health Check -->
+            <div class="test-card">
+                <h3>1️⃣ Health Check</h3>
+                <p>Verify backend server is running and responsive</p>
+                <button onclick="testHealth()">Test Health</button>
+                <div id="health-result"></div>
+            </div>
+
+            <!-- Login Test -->
+            <div class="test-card">
+                <h3>2️⃣ Authentication</h3>
+                <p>Test login functionality with admin account</p>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="login-email" value="admin@school.com" />
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" value="admin" />
+                </div>
+                <button onclick="testLogin()">Test Login</button>
+                <div id="login-result"></div>
+            </div>
+
+            <!-- Profile Test -->
+            <div class="test-card">
+                <h3>3️⃣ Get Profile</h3>
+                <p>Fetch current user profile (requires login first)</p>
+                <button onclick="testProfile()">Test Profile</button>
+                <div id="profile-result"></div>
+                <div class="info">⚠️ Login first using card #2</div>
+            </div>
+
+            <!-- Courses Test -->
+            <div class="test-card">
+                <h3>4️⃣ Get Courses</h3>
+                <p>Fetch available courses list</p>
+                <button onclick="testCourses()">Test Courses</button>
+                <div id="courses-result"></div>
+            </div>
+
+            <!-- Students Test -->
+            <div class="test-card">
+                <h3>5️⃣ Get Students</h3>
+                <p>Fetch all students (requires login)</p>
+                <button onclick="testStudents()">Test Students</button>
+                <div id="students-result"></div>
+            </div>
+
+            <!-- Enrollments Test -->
+            <div class="test-card">
+                <h3>6️⃣ Get Enrollments</h3>
+                <p>Fetch current user enrollments</p>
+                <button onclick="testEnrollments()">Test Enrollments</button>
+                <div id="enrollments-result"></div>
+            </div>
+
+            <!-- Token Status -->
+            <div class="test-card">
+                <h3>🔑 Token Status</h3>
+                <p>Check JWT token in localStorage</p>
+                <button onclick="checkToken()">Check Token</button>
+                <div id="token-result"></div>
+            </div>
+
+            <!-- Clear Storage -->
+            <div class="test-card">
+                <h3>🗑️ Clear Storage</h3>
+                <p>Clear all stored authentication data</p>
+                <button onclick="clearStorage()" style="background: #e74c3c;">Clear Storage</button>
+                <div id="clear-result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Include API client
+        const apiBase = 'http://localhost:8080';
+
+        async function request(path, opts = {}) {
+            const headers = opts.headers || {};
+            headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+            
+            const token = localStorage.getItem('sms_token');
+            if (token) headers['Authorization'] = 'Bearer ' + token;
+
+            try {
+                const res = await fetch(apiBase + path, {
+                    ...opts,
+                    headers
+                });
+                let body = null;
+                try { body = await res.json(); } catch(e) { body = null; }
+                
+                if (!res.ok) {
+                    const err = (body && (body.error || body.message)) || res.statusText || 'Request failed';
+                    const e = new Error(err);
+                    e.status = res.status;
+                    e.body = body;
+                    throw e;
+                }
+                return body;
+            } catch (e) {
+                throw e;
+            }
+        }
+
+        function showResult(elementId, success, message, data = null) {
+            const el = document.getElementById(elementId);
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${success ? 'success' : 'error'}`;
+            
+            if (data) {
+                resultDiv.innerHTML = `<strong>${message}</strong><pre style="margin-top: 10px; overflow-x: auto; font-size: 11px;">${JSON.stringify(data, null, 2)}</pre>`;
+            } else {
+                resultDiv.innerHTML = `<strong>${message}</strong>`;
+            }
+            
+            el.innerHTML = '';
+            el.appendChild(resultDiv);
+        }
+
+        function showLoading(elementId, message = 'Loading...') {
+            const el = document.getElementById(elementId);
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result loading';
+            resultDiv.innerHTML = `<strong>${message}</strong>`;
+            el.innerHTML = '';
+            el.appendChild(resultDiv);
+        }
+
+        async function testHealth() {
+            showLoading('health-result', 'Checking health...');
+            try {
+                const data = await request('/api/health');
+                showResult('health-result', true, '✅ Backend is healthy!', data);
+            } catch (err) {
+                showResult('health-result', false, `❌ Health check failed: ${err.message}`);
+            }
+        }
+
+        async function testLogin() {
+            showLoading('login-result', 'Logging in...');
+            try {
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                
+                if (!email || !password) {
+                    showResult('login-result', false, 'Email and password required');
+                    return;
+                }
+
+                const data = await request('/api/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+
+                const token = data.data?.token || data.token;
+                if (token) {
+                    localStorage.setItem('sms_token', token);
+                    if (data.data?.user) {
+                        localStorage.setItem('sms_user', JSON.stringify(data.data.user));
+                    }
+                }
+
+                showResult('login-result', true, '✅ Login successful!', { user: data.data?.user, hasToken: !!token });
+            } catch (err) {
+                showResult('login-result', false, `❌ Login failed: ${err.message}`);
+            }
+        }
+
+        async function testProfile() {
+            showLoading('profile-result', 'Fetching profile...');
+            try {
+                const data = await request('/api/profile');
+                showResult('profile-result', true, '✅ Profile fetched!', data.data || data);
+            } catch (err) {
+                showResult('profile-result', false, `❌ Profile fetch failed: ${err.message}`);
+            }
+        }
+
+        async function testCourses() {
+            showLoading('courses-result', 'Fetching courses...');
+            try {
+                const data = await request('/api/courses?page=1&limit=5');
+                const courses = data.data || data;
+                showResult('courses-result', true, `✅ ${Array.isArray(courses) ? courses.length : 'Some'} courses fetched!`, courses);
+            } catch (err) {
+                showResult('courses-result', false, `❌ Courses fetch failed: ${err.message}`);
+            }
+        }
+
+        async function testStudents() {
+            showLoading('students-result', 'Fetching students...');
+            try {
+                const data = await request('/api/students?page=1&limit=5');
+                const students = data.data || data;
+                showResult('students-result', true, `✅ Students fetched!`, students);
+            } catch (err) {
+                showResult('students-result', false, `❌ Students fetch failed: ${err.message}`);
+            }
+        }
+
+        async function testEnrollments() {
+            showLoading('enrollments-result', 'Fetching enrollments...');
+            try {
+                const data = await request('/api/student/enrollments');
+                const enrollments = data.data || data;
+                showResult('enrollments-result', true, `✅ Enrollments fetched!`, enrollments);
+            } catch (err) {
+                showResult('enrollments-result', false, `❌ Enrollments fetch failed: ${err.message}`);
+            }
+        }
+
+        function checkToken() {
+            const token = localStorage.getItem('sms_token');
+            const user = localStorage.getItem('sms_user');
+            
+            if (token) {
+                const tokenPreview = token.substring(0, 20) + '...';
+                showResult('token-result', true, '✅ Token found in localStorage', {
+                    tokenPreview,
+                    user: user ? JSON.parse(user) : 'Not stored'
+                });
+            } else {
+                showResult('token-result', false, '❌ No token found. Please login first.');
+            }
+        }
+
+        function clearStorage() {
+            localStorage.removeItem('sms_token');
+            localStorage.removeItem('sms_user');
+            showResult('clear-result', true, '✅ Storage cleared successfully');
+        }
+
+        // Auto-test health on load
+        window.addEventListener('load', testHealth);
+    </script>
+</body>
+</html>

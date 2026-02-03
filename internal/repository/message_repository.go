@@ -40,9 +40,10 @@ func (r *messageRepository) FindByReceiverID(receiverID uint, page, limit int) (
 	var messages []models.Message
 	var total int64
 	offset := (page - 1) * limit
-	err := r.db.Where("receiver_id = ?", receiverID).Count(&total).
-		Preload("Sender").
-		Preload("Receiver").
+	if err := r.db.Model(&models.Message{}).Where("receiver_id = ?", receiverID).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.Where("receiver_id = ?", receiverID).
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).
@@ -54,10 +55,10 @@ func (r *messageRepository) FindConversation(userID1, userID2 uint, page, limit 
 	var messages []models.Message
 	var total int64
 	offset := (page - 1) * limit
+	if err := r.db.Model(&models.Message{}).Where("(sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)", userID1, userID2, userID2, userID1).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
 	err := r.db.Where("(sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)", userID1, userID2, userID2, userID1).
-		Count(&total).
-		Preload("Sender").
-		Preload("Receiver").
 		Order("created_at ASC").
 		Limit(limit).
 		Offset(offset).

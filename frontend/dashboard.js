@@ -134,7 +134,7 @@
   logoutBtn.addEventListener('click', ()=>{
     localStorage.removeItem('sms_token');
     localStorage.removeItem('sms_user');
-    window.location.href = 'index.html';
+    window.location.href = 'login.html';
   });
 
   load();

@@ -47,3 +47,21 @@ school.db
 
 # Go module cache (optional)
 # GOMODCACHE
+# Binaries
+*.exe
+*.out
+*.bin
+
+# Go build
+/dist/
+/build/
+
+# Environment files
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store

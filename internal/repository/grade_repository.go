@@ -50,9 +50,10 @@ func (r *gradeRepository) FindByStudentID(studentID uint, page, limit int) ([]mo
 	var total int64
 
 	offset := (page - 1) * limit
-	err := r.db.Where("student_id = ?", studentID).Count(&total).
-		Preload("Course").
-		Preload("Teacher").
+	if err := r.db.Model(&models.Grade{}).Where("student_id = ?", studentID).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.Where("student_id = ?", studentID).
 		Limit(limit).
 		Offset(offset).
 		Find(&grades).Error
@@ -65,9 +66,10 @@ func (r *gradeRepository) FindByCourseID(courseID uint, page, limit int) ([]mode
 	var total int64
 
 	offset := (page - 1) * limit
-	err := r.db.Where("course_id = ?", courseID).Count(&total).
-		Preload("Student").
-		Preload("Student.User").
+	if err := r.db.Model(&models.Grade{}).Where("course_id = ?", courseID).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.Where("course_id = ?", courseID).
 		Limit(limit).
 		Offset(offset).
 		Find(&grades).Error
@@ -80,10 +82,10 @@ func (r *gradeRepository) FindAll(page, limit int) ([]models.Grade, int64, error
 	var total int64
 
 	offset := (page - 1) * limit
-	err := r.db.Model(&models.Grade{}).Count(&total).
-		Preload("Student").
-		Preload("Course").
-		Preload("Teacher").
+	if err := r.db.Model(&models.Grade{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.
 		Limit(limit).
 		Offset(offset).
 		Find(&grades).Error
@@ -104,9 +106,10 @@ func (r *gradeRepository) FindByTeacherID(teacherID uint, page, limit int) ([]mo
 	var total int64
 
 	offset := (page - 1) * limit
-	err := r.db.Where("graded_by = ?", teacherID).Count(&total).
-		Preload("Student").
-		Preload("Course").
+	if err := r.db.Model(&models.Grade{}).Where("graded_by = ?", teacherID).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.Where("graded_by = ?", teacherID).
 		Limit(limit).
 		Offset(offset).
 		Find(&grades).Error

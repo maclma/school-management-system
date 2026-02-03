@@ -41,8 +41,10 @@ func (r *paymentRepository) FindByStudentID(studentID uint, page, limit int) ([]
 	var payments []models.Payment
 	var total int64
 	offset := (page - 1) * limit
-	err := r.db.Where("student_id = ?", studentID).Count(&total).
-		Preload("Student").
+	if err := r.db.Model(&models.Payment{}).Where("student_id = ?", studentID).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.Where("student_id = ?", studentID).
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).
@@ -54,8 +56,10 @@ func (r *paymentRepository) FindByStatus(status string, page, limit int) ([]mode
 	var payments []models.Payment
 	var total int64
 	offset := (page - 1) * limit
-	err := r.db.Where("status = ?", status).Count(&total).
-		Preload("Student").
+	if err := r.db.Model(&models.Payment{}).Where("status = ?", status).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.Where("status = ?", status).
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).
@@ -67,8 +71,10 @@ func (r *paymentRepository) FindAll(page, limit int) ([]models.Payment, int64, e
 	var payments []models.Payment
 	var total int64
 	offset := (page - 1) * limit
-	err := r.db.Count(&total).
-		Preload("Student").
+	if err := r.db.Model(&models.Payment{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := r.db.
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).

@@ -1,40 +1,136 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Register - School Management</title>
-  <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Management - Register</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .register-container { background: white; border-radius: 8px; padding: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 500px; width: 100%; }
+        .register-container h1 { color: #2c3e50; margin-bottom: 30px; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; color: #2c3e50; font-weight: 500; margin-bottom: 6px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        input:focus, select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        button { width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 20px; }
+        button:hover { background: #5568d3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .message { margin-bottom: 20px; padding: 12px; border-radius: 4px; text-align: center; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .links { text-align: center; margin-top: 20px; }
+        .links a { color: #667eea; text-decoration: none; }
+        .links a:hover { text-decoration: underline; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+    </style>
 </head>
 <body>
-  <main class="container">
-    <h1>Create account</h1>
-    <form id="register-form" class="card">
-      <label for="first_name">First name</label>
-      <input id="first_name" name="first_name" required />
+    <div class="register-container">
+        <h1>🏫 Create Account</h1>
+        <div id="message"></div>
+        <form id="register-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="first_name">First Name</label>
+                    <input type="text" id="first_name" name="first_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="last_name">Last Name</label>
+                    <input type="text" id="last_name" name="last_name" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
 
-      <label for="last_name">Last name</label>
-      <input id="last_name" name="last_name" required />
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select id="role" name="role">
+                    <option value="student" selected>Student</option>
+                    <option value="teacher">Teacher</option>
+                </select>
+            </div>
 
-      <label for="email">Email</label>
-      <input id="email" name="email" type="email" required />
+            <button type="submit" id="register-btn">Create Account</button>
+        </form>
+        
+        <div class="links">
+            <p>Already have an account? <a href="login.html">Login here</a></p>
+        </div>
+    </div>
 
-      <label for="password">Password</label>
-      <input id="password" name="password" type="password" required />
+    <!-- Include API client -->
+    <script src="api.js"></script>
+    <script>
+        const form = document.getElementById('register-form');
+        const messageEl = document.getElementById('message');
+        const btn = document.getElementById('register-btn');
 
-      <label for="role">Role</label>
-      <select id="role" name="role">
-        <option value="student" selected>Student</option>
-        <option value="teacher">Teacher</option>
-      </select>
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            messageEl.textContent = '';
+            
+            const firstName = document.getElementById('first_name').value.trim();
+            const lastName = document.getElementById('last_name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value || 'student';
 
-      <button type="submit">Register</button>
-      <p id="message" class="muted"></p>
-    </form>
+            if (!firstName || !lastName || !email || !password) {
+                showMessage('All fields are required', 'error');
+                return;
+            }
 
-    <p class="hint">Already have an account? <a href="index.html">Login</a></p>
-  </main>
-  <script src="api.js"></script>
-  <script src="register.js"></script>
+            btn.disabled = true;
+            btn.textContent = 'Creating account...';
+
+            try {
+                console.log('Attempting registration...');
+                const payload = {
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: email,
+                    password: password,
+                    role: role
+                };
+
+                const response = await window.api.register(payload);
+                console.log('Registration response:', response);
+
+                showMessage('✅ Account created successfully! Redirecting to login...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+            } catch (err) {
+                console.error('Registration error:', err);
+                let errorMsg = 'Registration failed';
+                
+                if (err.body && err.body.error) {
+                    errorMsg = err.body.error;
+                } else if (err.message) {
+                    errorMsg = err.message;
+                }
+                
+                showMessage(errorMsg, 'error');
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        });
+
+        function showMessage(text, type) {
+            messageEl.className = `message ${type}`;
+            messageEl.textContent = text;
+            messageEl.style.display = 'block';
+        }
+    </script>
 </body>
 </html>

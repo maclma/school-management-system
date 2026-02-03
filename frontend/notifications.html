@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; }
+        .header button { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        .section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .section h2 { color: #2c3e50; border-bottom: 2px solid #fee140; padding-bottom: 10px; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { display: inline-block; padding: 10px 15px; background: white; border-radius: 4px; margin-right: 10px; text-decoration: none; color: #fa709a; border: 1px solid #ddd; }
+        .nav a:hover { background: #fa709a; color: white; }
+        .notification { padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: start; border-left: 4px solid #fa709a; }
+        .notification.unread { background: #f0f8ff; }
+        .notification.read { background: #f9f9f9; opacity: 0.8; }
+        .notification .icon { font-size: 24px; margin-right: 15px; min-width: 30px; }
+        .notification .content { flex: 1; }
+        .notification h3 { color: #2c3e50; margin-bottom: 5px; }
+        .notification .message { color: #555; }
+        .notification .time { font-size: 12px; color: #999; margin-top: 5px; }
+        .notification .actions { display: flex; gap: 5px; }
+        button { background: #fa709a; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #f85980; }
+        .filter { margin-bottom: 20px; display: flex; gap: 10px; }
+        select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 15px; border-radius: 8px; text-align: center; }
+        .stat-card .value { font-size: 24px; font-weight: bold; }
+        .stat-card .label { font-size: 12px; opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 Notifications</h1>
+            <button onclick="logout()">Logout</button>
+        </div>
+
+        <div class="nav">
+            <a href="admin-dashboard.html">Dashboard</a>
+            <a href="grades.html">Grades</a>
+            <a href="notifications.html">Notifications</a>
+            <a href="messages.html">Messages</a>
+        </div>
+
+        <div class="section">
+            <h2>📊 Notification Summary</h2>
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="value" id="unread-count">0</div>
+                    <div class="label">Unread</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value" id="total-count">0</div>
+                    <div class="label">Total</div>
+                </div>
+            </div>
+            <button onclick="markAllAsRead()" style="margin-right: 10px;">Mark All as Read</button>
+            <button onclick="clearAllNotifications()" style="background: #e74c3c;">Clear All</button>
+        </div>
+
+        <div class="section">
+            <h2>📬 Your Notifications</h2>
+            <div class="filter">
+                <select id="filter-type" onchange="filterNotifications()">
+                    <option value="">All Types</option>
+                    <option value="announcement">Announcements</option>
+                    <option value="grade">Grades</option>
+                    <option value="attendance">Attendance</option>
+                    <option value="assignment">Assignments</option>
+                    <option value="message">Messages</option>
+                </select>
+                <select id="filter-read" onchange="filterNotifications()">
+                    <option value="">All Status</option>
+                    <option value="unread">Unread</option>
+                    <option value="read">Read</option>
+                </select>
+            </div>
+            <div id="notifications-list">
+                <p style="text-align: center;">Loading notifications...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        let allNotifications = [];
+
+        const notificationIcons = {
+            announcement: '📢',
+            grade: '📊',
+            attendance: '📍',
+            assignment: '📝',
+            message: '💬',
+            default: '🔔'
+        };
+
+        async function load() {
+            try {
+                const res = await window.api.getNotifications?.() || { data: [] };
+                allNotifications = res.data || res || [];
+                displayNotifications(allNotifications);
+                updateStats();
+            } catch (err) {
+                console.error('Error loading notifications:', err);
+                document.getElementById('notifications-list').innerHTML = '<p style="color: #e74c3c;">Error loading notifications</p>';
+            }
+        }
+
+        function displayNotifications(notifications) {
+            const el = document.getElementById('notifications-list');
+            if (!notifications || notifications.length === 0) {
+                el.innerHTML = '<p style="text-align: center; color: #999;">No notifications</p>';
+                return;
+            }
+
+            el.innerHTML = notifications.map((n, idx) => {
+                const icon = notificationIcons[n.type] || notificationIcons.default;
+                const timeAgo = getTimeAgo(new Date(n.created_at));
+
+                return `
+                    <div class="notification ${n.read ? 'read' : 'unread'}">
+                        <div class="icon">${icon}</div>
+                        <div class="content">
+                            <h3>${n.title}</h3>
+                            <div class="message">${n.message || n.content}</div>
+                            <div class="time">${timeAgo}</div>
+                        </div>
+                        <div class="actions">
+                            ${!n.read ? `<button onclick="markAsRead(${idx})">Mark as Read</button>` : ''}
+                            <button onclick="deleteNotification(${idx})" style="background: #e74c3c;">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            const unreadCount = allNotifications.filter(n => !n.read).length;
+            document.getElementById('unread-count').textContent = unreadCount;
+            document.getElementById('total-count').textContent = allNotifications.length;
+        }
+
+        function getTimeAgo(date) {
+            const now = new Date();
+            const seconds = Math.floor((now - date) / 1000);
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+            if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+            return Math.floor(seconds / 86400) + 'd ago';
+        }
+
+        async function markAsRead(idx) {
+            try {
+                const n = allNotifications[idx];
+                await window.api.markNotificationAsRead?.(n.id);
+                n.read = true;
+                updateStats();
+                displayNotifications(allNotifications);
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function markAllAsRead() {
+            try {
+                for (let n of allNotifications) {
+                    if (!n.read) {
+                        await window.api.markNotificationAsRead?.(n.id);
+                        n.read = true;
+                    }
+                }
+                updateStats();
+                displayNotifications(allNotifications);
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function deleteNotification(idx) {
+            try {
+                const n = allNotifications[idx];
+                await window.api.deleteNotification?.(n.id);
+                allNotifications.splice(idx, 1);
+                updateStats();
+                displayNotifications(allNotifications);
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function clearAllNotifications() {
+            if (!confirm('Clear all notifications?')) return;
+            try {
+                for (let n of allNotifications) {
+                    await window.api.deleteNotification?.(n.id);
+                }
+                allNotifications = [];
+                updateStats();
+                displayNotifications(allNotifications);
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function filterNotifications() {
+            const type = document.getElementById('filter-type').value;
+            const read = document.getElementById('filter-read').value;
+
+            let filtered = allNotifications;
+            if (type) filtered = filtered.filter(n => n.type === type);
+            if (read === 'read') filtered = filtered.filter(n => n.read);
+            if (read === 'unread') filtered = filtered.filter(n => !n.read);
+
+            displayNotifications(filtered);
+        }
+
+        function logout() {
+            localStorage.removeItem('sms_token');
+            localStorage.removeItem('sms_user');
+            window.location.href = 'login.html';
+        }
+
+        if (!localStorage.getItem('sms_token')) {
+            window.location.href = 'login.html';
+        } else {
+            load();
+        }
+    </script>
+</body>
+</html>

@@ -183,11 +183,90 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 		return
 	}
 
+	// Fetch user to check if it's a super admin
+	user, err := h.userService.GetUserByID(uint(id))
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to fetch user")
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	// Prevent deletion of super admin users
+	if user.IsSuperAdmin {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Super admin users cannot be deleted"})
+		return
+	}
+
 	if err := h.userService.DeleteUser(uint(id)); err != nil {
 		h.logger.WithError(err).Error("Failed to delete user")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "User deleted"})
+	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+}
+func (h *UserHandler) SetSuperAdmin(c *gin.Context) {
+	// Only super admin can set super admin status
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Check if current user is a super admin
+	currentUser, err := h.userService.GetUserByID(uint(userID.(float64)))
+	if err != nil || !currentUser.IsSuperAdmin {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only super admin can manage super admin status"})
+		return
+	}
+
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	var req struct {
+		IsSuperAdmin bool `json:"is_super_admin" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := h.userService.SetSuperAdmin(uint(id), req.IsSuperAdmin)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to set super admin status")
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Super admin status updated",
+		"user": gin.H{
+			"id":             user.ID,
+			"email":          user.Email,
+			"is_super_admin": user.IsSuperAdmin,
+		},
+	})
+}
+
+func (h *UserHandler) GetSuperAdmins(c *gin.Context) {
+	superAdmins, err := h.userService.GetSuperAdmins()
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to fetch super admins")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch super admins"})
+		return
+	}
+
+	// Hide passwords
+	for i := range superAdmins {
+		superAdmins[i].Password = ""
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":  superAdmins,
+		"count": len(superAdmins),
+	})
 }

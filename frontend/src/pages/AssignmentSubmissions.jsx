@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../api'
-import ui from '../ui'
+import { showToast } from '../ui'
 
 export default function AssignmentSubmissions() {
   const path = window.location.pathname
@@ -24,7 +24,7 @@ export default function AssignmentSubmissions() {
       setAssignment(assignmentRes)
       setSubmissions(submissionsRes.submissions || [])
     } catch (error) {
-      ui.toast.error('Failed to load assignment data')
+      showToast('Failed to load assignment data', 'error')
     } finally {
       setLoading(false)
     }
@@ -33,11 +33,11 @@ export default function AssignmentSubmissions() {
   const handleGradeSubmission = async (submissionId, score, feedback) => {
     try {
       await api.gradeSubmission(submissionId, { score: parseFloat(score), feedback })
-      ui.toast.success('Submission graded successfully')
+      showToast('Submission graded successfully', 'success')
       setGradingSubmission(null)
       loadData()
     } catch (error) {
-      ui.toast.error('Failed to grade submission')
+      showToast('Failed to grade submission', 'error')
     }
   }
 
@@ -177,7 +177,7 @@ function GradeSubmissionModal({ submission, assignment, onSubmit, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (score === '' || score < 0 || score > assignment.max_score) {
-      ui.toast.error(`Score must be between 0 and ${assignment.max_score}`)
+      showToast(`Score must be between 0 and ${assignment.max_score}`, 'error')
       return
     }
 
